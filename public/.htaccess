@@ -1,0 +1,12 @@
+# identidad-web en Apache (cPanel): rutas de Angular (/authorize, /login, /logout) sirven index.html.
+# Las peticiones a /api las atiende la API de identidad (Laravel); ajusta la ruta a donde esté su carpeta public.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # RewriteRule ^api/ /ruta/a/identidad/public/index.php [L]
+
+  RewriteCond %{REQUEST_URI} !^/api/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
