@@ -15,15 +15,15 @@ import { RouterOutlet } from '@angular/router';
           <ul class="puntos">
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <span>Tu contraseña solo se escribe en esta página. Los sistemas nunca la ven.</span>
+              <span>Nunca compartas tu contraseña. Nadie de Juarez Campos te la pedirá.</span>
             </li>
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>Después de 10 intentos fallidos, tu cuenta se bloquea para protegerla.</span>
+              <span>Verifica que la dirección sea identidad.juarezcampos.net antes de escribir tus datos.</span>
             </li>
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-              <span>Cada sistema te muestra solo lo que tu rol permite.</span>
+              <span>Al terminar, cierra sesión si usas un equipo compartido.</span>
             </li>
           </ul>
         </div>

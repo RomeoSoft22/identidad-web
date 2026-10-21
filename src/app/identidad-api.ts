@@ -9,11 +9,22 @@ export interface Autorizado { redirect_to: string; sistema: Sistema }
 
 /** Cuerpo de error de la API de identidad. */
 export interface ErrorIdentidad {
-  codigo?: 'login_requerido' | 'sin_acceso' | 'solicitud_invalida' | 'credenciales' | 'bloqueada' | 'limite' | 'sin_sesion';
+  codigo?: 'login_requerido' | 'sin_acceso' | 'solicitud_invalida' | 'credenciales' | 'limite' | 'sin_sesion'
+    | 'verificacion_requerida' | 'codigo_incorrecto' | 'codigo_vencido';
+  /** Correo enmascarado al que se envió el código (j***z@gmail.com). */
+  correo?: string;
   message?: string;
   sistema?: Sistema;
   usuario?: Usuario;
   errors?: Record<string, string[]>;
+}
+
+function zonaHoraria(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -28,8 +39,19 @@ export class IdentidadApi {
     return this.http.get<{ usuario: Usuario }>('/api/sesion');
   }
 
+  /** Además de las credenciales, envía la zona horaria y el idioma del navegador para la auditoría de la sesión. */
   login(email: string, password: string) {
-    return this.http.post<{ usuario: Usuario }>('/api/login', { email, password });
+    return this.http.post<{ usuario: Usuario }>('/api/login', {
+      email,
+      password,
+      zona_horaria: zonaHoraria(),
+      idioma: navigator.language || null,
+    });
+  }
+
+  /** Segundo paso cuando la cuenta está bloqueada: el código de 6 dígitos enviado al correo. */
+  verificarCodigo(codigo: string) {
+    return this.http.post<{ usuario: Usuario }>('/api/login/verificar', { codigo });
   }
 
   logout(postLogoutRedirectUri: string | null) {
