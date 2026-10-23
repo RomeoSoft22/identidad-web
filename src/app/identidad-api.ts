@@ -35,6 +35,11 @@ function zonaHoraria(): string | null {
 export class IdentidadApi {
   private http = inject(HttpClient);
 
+  /** Métodos de ingreso habilitados en identidad (por ahora, si hay ingreso con Google). */
+  metodos() {
+    return this.http.get<{ google: boolean }>('/api/metodos');
+  }
+
   sesion() {
     return this.http.get<{ usuario: Usuario }>('/api/sesion');
   }

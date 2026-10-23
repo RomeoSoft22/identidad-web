@@ -3,7 +3,24 @@ import { Component, ElementRef, inject, input, output, signal, viewChild } from 
 import { FormsModule } from '@angular/forms';
 import { ErrorIdentidad, IdentidadApi, Usuario } from '../identidad-api';
 
-/** Formulario de correo y contraseña. Emite el usuario cuando el ingreso es correcto. */
+/** Resultado del ingreso con Google que identidad devuelve en ?google=… */
+const MENSAJES_GOOGLE: Record<string, { tipo: 'aviso' | 'error'; texto: string }> = {
+  pendiente: {
+    tipo: 'aviso',
+    texto: 'Recibimos tu solicitud de acceso. Un administrador debe aprobarla y asignarte los sistemas; te avisaremos por correo.',
+  },
+  cancelado: { tipo: 'aviso', texto: 'Cancelaste el ingreso con Google. Puedes intentarlo de nuevo o usar tu correo y contraseña.' },
+  correo_no_verificado: { tipo: 'error', texto: 'Tu cuenta de Google no tiene el correo verificado. Verifícalo en Google e inténtalo de nuevo.' },
+  bloqueada: {
+    tipo: 'error',
+    texto: 'Tu cuenta está bloqueada. Ingresa con tu correo y contraseña para recibir un código de desbloqueo, o pide ayuda al administrador.',
+  },
+  sin_acceso: { tipo: 'error', texto: 'Tu cuenta no está habilitada. Pide al administrador que revise tu acceso.' },
+  no_disponible: { tipo: 'error', texto: 'El ingreso con Google no está disponible en este momento. Usa tu correo y contraseña.' },
+  error: { tipo: 'error', texto: 'No pudimos completar el ingreso con Google. Inténtalo de nuevo.' },
+};
+
+/** Formulario de correo y contraseña, con la opción «Continuar con Google». Emite el usuario cuando el ingreso es correcto. */
 @Component({
   selector: 'jc-formulario-login',
   imports: [FormsModule],
@@ -23,6 +40,13 @@ import { ErrorIdentidad, IdentidadApi, Usuario } from '../identidad-api';
       <div class="alerta" role="alert" id="error-login">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
         <span>{{ error() }}</span>
+      </div>
+    }
+
+    @if (avisoGoogle() && paso() === 'credenciales') {
+      <div class="aviso" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <span>{{ avisoGoogle() }}</span>
       </div>
     }
 
@@ -73,6 +97,19 @@ import { ErrorIdentidad, IdentidadApi, Usuario } from '../identidad-api';
         @if (enviando()) { <span class="spinner" aria-hidden="true"></span> Ingresando… } @else { Ingresar }
       </button>
     </form>
+
+    @if (googleDisponible()) {
+      <div class="separador" role="separator"><span>o</span></div>
+      <a class="boton-google" [href]="urlGoogle()">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
+          <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+          <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.4-.4-3.5z"/>
+        </svg>
+        Continuar con Google
+      </a>
+    }
     }
 
     <p class="ayuda">¿No puedes ingresar? Escribe al administrador de tu sistema.</p>
@@ -98,6 +135,15 @@ import { ErrorIdentidad, IdentidadApi, Usuario } from '../identidad-api';
     .ver { position: absolute; top: 4px; right: 4px; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
     .ver:hover { background: var(--cream); color: var(--ink); }
     .ver svg { width: 20px; height: 20px; }
+    .separador { display: flex; align-items: center; gap: 14px; margin: 22px 0 18px; color: var(--muted); font-size: 13px; }
+    .separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .boton-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 48px;
+      font: 600 15px/1 var(--body); color: var(--ink); text-decoration: none; background: var(--white);
+      border: 1.5px solid var(--line); border-radius: 10px; transition: background .15s, border-color .15s;
+    }
+    .boton-google:hover { background: var(--cream); border-color: #c5cfdb; }
+    .boton-google svg { width: 20px; height: 20px; }
     .aviso { display: grid; grid-template-columns: 20px 1fr; gap: 10px; padding: 12px 14px; margin: 0 0 18px; border-radius: 10px; background: var(--blue-soft); font-size: 14px; }
     .aviso svg { width: 20px; height: 20px; color: var(--blue); }
     .codigo { font: 700 24px/1 var(--body); letter-spacing: .5em; text-align: center; }
@@ -122,6 +168,39 @@ export class FormularioLogin {
   verPassword = signal(false);
   enviando = signal(false);
   error = signal('');
+
+  /** El botón solo aparece si identidad tiene configurado el ingreso con Google. */
+  googleDisponible = signal(false);
+  /** Mensaje informativo al volver de Google (por ejemplo, solicitud pendiente de aprobación). */
+  avisoGoogle = signal('');
+
+  ngOnInit(): void {
+    this.api.metodos().subscribe({ next: m => this.googleDisponible.set(m.google), error: () => {} });
+
+    const parametros = new URLSearchParams(location.search);
+    const resultado = parametros.get('google');
+    if (resultado) {
+      const mensaje = MENSAJES_GOOGLE[resultado] ?? MENSAJES_GOOGLE['error'];
+      (mensaje.tipo === 'aviso' ? this.avisoGoogle : this.error).set(mensaje.texto);
+      // Se quita el parámetro de la barra de direcciones para que no se repita al recargar.
+      parametros.delete('google');
+      history.replaceState(history.state, '', location.pathname + (parametros.size ? `?${parametros}` : ''));
+    }
+  }
+
+  /** Va a Google y, al volver, regresa a esta misma pantalla (con los datos del sistema que pidió el ingreso). */
+  urlGoogle(): string {
+    const parametros = new URLSearchParams(location.search);
+    parametros.delete('google');
+    const retorno = location.pathname + (parametros.size ? `?${parametros}` : '');
+    const datos = new URLSearchParams({ retorno, idioma: navigator.language || '' });
+    try {
+      datos.set('zona_horaria', Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+    } catch {
+      /* sin zona horaria */
+    }
+    return `/api/google/redirect?${datos}`;
+  }
 
   ngAfterViewInit(): void {
     this.correo()?.nativeElement.focus();
