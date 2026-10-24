@@ -5,9 +5,19 @@ import { ErrorIdentidad, IdentidadApi, Usuario } from '../identidad-api';
 
 /** Resultado del ingreso con Google que identidad devuelve en ?google=… */
 const MENSAJES_GOOGLE: Record<string, { tipo: 'aviso' | 'error'; texto: string }> = {
+  // Primera vez con Google: se creó la cuenta, pero queda deshabilitada hasta que el administrador la apruebe.
+  registrada: {
+    tipo: 'aviso',
+    texto: 'Tu cuenta fue registrada, pero todavía no está habilitada. Debe ser aprobada por el administrador del sistema; te avisaremos por correo cuando puedas ingresar.',
+  },
   pendiente: {
     tipo: 'aviso',
-    texto: 'Recibimos tu solicitud de acceso. Un administrador debe aprobarla y asignarte los sistemas; te avisaremos por correo.',
+    texto: 'Tu cuenta todavía no está habilitada. Debe ser aprobada por el administrador del sistema; te avisaremos por correo cuando puedas ingresar.',
+  },
+  // El correo ya pertenece a una cuenta del sistema: entra con su contraseña, no con Google.
+  usar_contrasena: {
+    tipo: 'aviso',
+    texto: 'Ya tienes una cuenta registrada en el sistema con este correo. Ingresa con tu correo y contraseña.',
   },
   cancelado: { tipo: 'aviso', texto: 'Cancelaste el ingreso con Google. Puedes intentarlo de nuevo o usar tu correo y contraseña.' },
   correo_no_verificado: { tipo: 'error', texto: 'Tu cuenta de Google no tiene el correo verificado. Verifícalo en Google e inténtalo de nuevo.' },
